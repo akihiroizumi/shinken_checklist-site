@@ -658,5 +658,46 @@ function resetAll() {
 
 renderAll();
 </script>
+<!-- ************************************
+ Firebase 初期化（GitHub Pages + Firestore接続用）
+ 追加場所：既存の </script> の下、</body> の上
+************************************* -->
+<script type="module">
+
+  // =========================
+  // Firebase SDK を読み込む
+  // =========================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
+
+  // =========================
+  // Firebaseプロジェクト設定
+  // （Firebaseコンソールから取得した値）
+  // =========================
+  const firebaseConfig = {
+    apiKey: "AIzaSyAX9mZmQ-vMraFwMhwQccdg40DylwDbjv8",
+    authDomain: "shinkenkousai.firebaseapp.com",
+    projectId: "shinkenkousai",
+    storageBucket: "shinkenkousai.firebasestorage.app",
+    messagingSenderId: "470853132508",
+    appId: "1:470853132508:web:adfd6b822f50f75f8bd419",
+    measurementId: "G-ZRSRYQHV2L"
+  };
+
+  // =========================
+  // Firebase初期化
+  // =========================
+  const app = initializeApp(firebaseConfig);
+
+  // Analytics初期化
+  const analytics = getAnalytics(app);
+
+  // =========================
+  // 動作確認（F12 → Consoleで確認）
+  // =========================
+  console.log("Firebase 接続成功");
+
+</script>
+<!-- ******** Firebaseここまで ******** -->
 </body>
 </html>

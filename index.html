@@ -668,5 +668,37 @@ function autoResizeTextarea(el) {
 
 renderAll();
 </script>
+<!-- =========================
+ Firebase Firestore（データベース）接続用スクリプト追加
+========================= -->
+<script type="module">
+  // Firebase SDKのimport
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
+  // Firestore SDKのimport
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+  // Firebase設定
+  const firebaseConfig = {
+    apiKey: "AIzaSyAX9mZmQ-vMraFwMhwQccdg40DylwDbjv8",
+    authDomain: "shinkenkousai.firebaseapp.com",
+    projectId: "shinkenkousai",
+    storageBucket: "shinkenkousai.firebasestorage.app",
+    messagingSenderId: "470853132508",
+    appId: "1:470853132508:web:adfd6b822f50f75f8bd419",
+    measurementId: "G-ZRSRYQHV2L"
+  };
+
+  // Firebase初期化
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  // Firestore（データベース）初期化
+  // コメント: これでデータベース操作が可能になります
+  const db = getFirestore(app);
+
+  // 動作確認（F12 → Consoleで確認）
+  console.log("Firestore DB 接続成功", db);
+</script>
 </body>
 </html>

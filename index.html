@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>真剣交際期間チェックリスト</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --cream: #faf7f2;
@@ -368,20 +366,12 @@
     transition: all 0.2s;
   }
 
-  .btn-pdf {
+  .btn-print {
     background: var(--accent);
     color: white;
   }
 
-  .btn-pdf:hover { background: var(--accent-hover); }
-  .btn-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
-
-  .btn-print {
-    background: #6b8c7a;
-    color: white;
-  }
-
-  .btn-print:hover { background: #556e60; }
+  .btn-print:hover { background: var(--accent-hover); }
 
   .btn-reset {
     background: rgba(255,255,255,0.1);
@@ -414,7 +404,6 @@
 </div>
 
 <div class="bottom-bar">
-  <button class="btn-pdf" id="btnPdf" onclick="savePDF()">📄 PDFに保存</button>
   <button class="btn-print" onclick="window.print()">🖨 印刷</button>
   <button class="btn-reset" onclick="resetAll()">リセット</button>
 </div>
@@ -579,9 +568,11 @@ function renderItems(si) {
       </div>
       <div class="memo-area${item.memo ? ' open' : ''}" id="memo-area-${si}-${ii}">
         <textarea placeholder="メモを入力…" onchange="saveMemo(${si},${ii},this.value)" oninput="autoResizeTextarea(this)">${item.memo || ''}</textarea>
+        <button class="btn-add-item" style="margin-top:6px;float:right;" onclick="saveMemoToFirestore(${si},${ii})">保存</button>
       </div>
     `;
     container.appendChild(el);
+    // textareaの高さを初期化（内容に合わせて自動調整）
     const textarea = el.querySelector('textarea');
     if (textarea) autoResizeTextarea(textarea);
   });
@@ -596,10 +587,10 @@ function toggleItem(si, ii) {
   } else {
     el.classList.remove('checked');
   }
+  // update section count
   const items = state[si].items;
   const checkedCount = items.filter(i => i.checked).length;
-  const secs = document.querySelectorAll('#sectionsGrid .section');
-  const countEl = secs[si] ? secs[si].querySelector('.section-count') : null;
+  const countEl = document.querySelector(`#sectionsGrid .section:nth-child(${si+1}) .section-count`);
   if (countEl) countEl.textContent = checkedCount + '/' + items.length;
   updateProgress();
 }
@@ -638,6 +629,7 @@ function addItem(si) {
   input.value = '';
   saveState();
   renderItems(si);
+  // update count
   const items = state[si].items;
   const checkedCount = items.filter(i => i.checked).length;
   const secs = document.querySelectorAll('#sectionsGrid .section');
@@ -668,132 +660,24 @@ function resetAll() {
   renderAll();
 }
 
+// --- textareaの高さを入力内容に合わせて自動調整する関数 ---
+// コメント: メモ欄のtextareaが編集時に自動で高さ拡大されるようにする
 function autoResizeTextarea(el) {
-  el.style.height = 'auto';
+  el.style.height = 'auto'; // 一度リセット
   el.style.height = (el.scrollHeight) + 'px';
 }
 
-// ===== PDF保存機能（スマホ対応）=====
-async function savePDF() {
-  const btn = document.getElementById('btnPdf');
-  btn.textContent = '生成中…';
-  btn.disabled = true;
 
-  // すべてのセクションを一時展開
-  const hiddenBodies = [];
-  document.querySelectorAll('.section-body').forEach(b => {
-    if (b.style.display === 'none') {
-      hiddenBodies.push(b);
-      b.style.display = '';
-    }
-  });
-
-  // 少し待ってDOMが安定するのを待つ
-  await new Promise(r => setTimeout(r, 300));
-
-  try {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const margin = 10;
-
-    const targetEl = document.querySelector('.container');
-
-    const canvas = await html2canvas(targetEl, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#faf7f2',
-      scrollY: -window.scrollY,
-      windowWidth: document.documentElement.scrollWidth,
-    });
-
-    const imgW = pageW - margin * 2;
-    const totalImgH = (canvas.height * imgW) / canvas.width;
-    const pageContentH = pageH - margin * 2;
-    const scaleRatio = canvas.width / imgW;
-
-    let renderedH = 0;
-    let isFirstPage = true;
-
-    while (renderedH < totalImgH) {
-      if (!isFirstPage) pdf.addPage();
-      isFirstPage = false;
-
-      const sliceH = Math.min(pageContentH, totalImgH - renderedH);
-      const srcY = renderedH * scaleRatio;
-      const srcH = sliceH * scaleRatio;
-
-      const pageCanvas = document.createElement('canvas');
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = Math.ceil(srcH);
-      const ctx = pageCanvas.getContext('2d');
-      ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
-      pdf.addImage(
-        pageCanvas.toDataURL('image/jpeg', 0.92),
-        'JPEG',
-        margin,
-        margin,
-        imgW,
-        sliceH
-      );
-
-      renderedH += sliceH;
-    }
-
-    pdf.save('真剣交際チェックリスト.pdf');
-  } catch(e) {
-    alert('PDF生成に失敗しました: ' + e.message);
-    console.error(e);
-  }
-
-  // 非表示に戻す
-  hiddenBodies.forEach(b => { b.style.display = 'none'; });
-
-  btn.textContent = '📄 PDFに保存';
-  btn.disabled = false;
-}
-
-// ページ読み込み時
-window.addEventListener('DOMContentLoaded', () => {
-  renderAll();
-  loadMemosFromFirestore();
-});
-</script>
-
-<!-- Firebase Firestore接続 -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAX9mZmQ-vMraFwMhwQccdg40DylwDbjv8",
-    authDomain: "shinkenkousai.firebaseapp.com",
-    projectId: "shinkenkousai",
-    storageBucket: "shinkenkousai.firebasestorage.app",
-    messagingSenderId: "470853132508",
-    appId: "1:470853132508:web:adfd6b822f50f75f8bd419",
-    measurementId: "G-ZRSRYQHV2L"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const db = getFirestore(app);
-  window.db = db;
-  console.log("Firestore DB 接続成功", db);
-</script>
-
-<script>
-// Firestoreにメモを保存
+// --- Firestoreにメモを保存する関数 ---
+// コメント: section番号・item番号・メモ内容をFirestoreに保存
 async function saveMemoToFirestore(si, ii) {
+  // Firestore SDKのimportが必要
   const textarea = document.getElementById(`memo-area-${si}-${ii}`).querySelector('textarea');
   const memoText = textarea.value;
+  // Firestore SDKの関数をimport（グローバルスコープでimport済みなら不要）
   const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
   try {
-    const docRef = await addDoc(collection(window.db, "memos"), {
+    const docRef = await addDoc(collection(db, "memos"), {
       section: si,
       item: ii,
       memo: memoText,
@@ -807,14 +691,15 @@ async function saveMemoToFirestore(si, ii) {
   }
 }
 
-// Firestoreから全メモを取得してstateに反映
+// --- Firestoreから全メモを取得しstateに反映する関数 ---
+// コメント: Firestoreのmemosコレクションから全メモを取得し、stateに反映
 async function loadMemosFromFirestore() {
-  if (!window.db) return;
   const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
   try {
     const querySnapshot = await getDocs(collection(window.db, "memos"));
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      // section, item, memoが存在する場合のみ反映
       if (typeof data.section === 'number' && typeof data.item === 'number' && typeof data.memo === 'string') {
         if (state[data.section] && state[data.section].items[data.item]) {
           state[data.section].items[data.item].memo = data.memo;
@@ -827,7 +712,44 @@ async function loadMemosFromFirestore() {
     console.error("Firestoreからのメモ取得失敗: ", e);
   }
 }
-</script>
 
+// ページ読み込み時にFirestoreからメモを取得して反映
+window.addEventListener('DOMContentLoaded', () => {
+  loadMemosFromFirestore();
+});
+</script>
+<!-- =========================
+ Firebase Firestore（データベース）接続用スクリプト追加
+========================= -->
+<script type="module">
+  // Firebase SDKのimport
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
+  // Firestore SDKのimport
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+  // Firebase設定
+  const firebaseConfig = {
+    apiKey: "AIzaSyAX9mZmQ-vMraFwMhwQccdg40DylwDbjv8",
+    authDomain: "shinkenkousai.firebaseapp.com",
+    projectId: "shinkenkousai",
+    storageBucket: "shinkenkousai.firebasestorage.app",
+    messagingSenderId: "470853132508",
+    appId: "1:470853132508:web:adfd6b822f50f75f8bd419",
+    measurementId: "G-ZRSRYQHV2L"
+  };
+
+  // Firebase初期化
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  // Firestore（データベース）初期化
+  // コメント: これでデータベース操作が可能になります
+  const db = getFirestore(app);
+  window.db = db; // グローバル公開で他の関数から参照可能に
+
+  // 動作確認（F12 → Consoleで確認）
+  console.log("Firestore DB 接続成功", db);
+</script>
 </body>
 </html>

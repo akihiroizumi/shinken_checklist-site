@@ -691,7 +691,32 @@ async function saveMemoToFirestore(si, ii) {
   }
 }
 
-renderAll();
+// --- Firestoreから全メモを取得しstateに反映する関数 ---
+// コメント: Firestoreのmemosコレクションから全メモを取得し、stateに反映
+async function loadMemosFromFirestore() {
+  const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
+  try {
+    const querySnapshot = await getDocs(collection(window.db, "memos"));
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      // section, item, memoが存在する場合のみ反映
+      if (typeof data.section === 'number' && typeof data.item === 'number' && typeof data.memo === 'string') {
+        if (state[data.section] && state[data.section].items[data.item]) {
+          state[data.section].items[data.item].memo = data.memo;
+        }
+      }
+    });
+    renderAll();
+    console.log("Firestoreからメモを取得・反映しました");
+  } catch (e) {
+    console.error("Firestoreからのメモ取得失敗: ", e);
+  }
+}
+
+// ページ読み込み時にFirestoreからメモを取得して反映
+window.addEventListener('DOMContentLoaded', () => {
+  loadMemosFromFirestore();
+});
 </script>
 <!-- =========================
  Firebase Firestore（データベース）接続用スクリプト追加

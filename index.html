@@ -721,6 +721,7 @@ renderAll();
   // Firestore（データベース）初期化
   // コメント: これでデータベース操作が可能になります
   const db = getFirestore(app);
+  window.db = db; // グローバル公開で他の関数から参照可能に
 
   // 動作確認（F12 → Consoleで確認）
   console.log("Firestore DB 接続成功", db);

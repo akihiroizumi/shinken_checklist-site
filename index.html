@@ -97,6 +97,8 @@
     overflow: hidden;
     box-shadow: 0 2px 12px var(--shadow);
     transition: box-shadow 0.2s;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .section:hover {
@@ -491,11 +493,35 @@
   #logout-btn:hover { background: rgba(255,255,255,0.25); }
 
   @media print {
-    .bottom-bar, .btn-memo, .btn-delete-item, .add-item-form, .auth-bar { display: none !important; }
-    .memo-area { display: block !important; }
-    body { background: white; }
-    .section { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+
+    .bottom-bar,
+    .btn-memo,
+    .btn-delete-item,
+    .add-item-form,
+    .auth-bar {
+      display: none !important;
+    }
+
+    .memo-area {
+      display: block !important;
+    }
+
+    body {
+      background: white;
+    }
+
+    .sections-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-shadow: none;
+      border: 1px solid #ccc;
+    }
   }
+
 </style>
 </head>
 <body>
@@ -541,23 +567,28 @@ function savePDF() {
   const element = document.getElementById('main-content');
 
   const opt = {
-    margin: 0.5,
+    margin: 0.4,
     filename: 'checklist.pdf',
+
     image: {
       type: 'jpeg',
       quality: 0.98
     },
+
     html2canvas: {
       scale: 2,
       useCORS: true
     },
+
     jsPDF: {
       unit: 'in',
       format: 'a4',
       orientation: 'portrait'
     },
+
     pagebreak: {
-      mode: ['avoid-all', 'css', 'legacy']
+      mode: ['css'],
+      avoid: ['.section']
     }
   };
 

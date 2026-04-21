@@ -532,11 +532,41 @@
 </div>
 
 <div class="bottom-bar" style="display:none;">
-  <button class="btn-print" onclick="window.print()">🖨 印刷</button>
+  <button class="btn-print" onclick="savePDF()">📄 PDF保存</button>
   <button class="btn-reset" onclick="resetAll()">リセット</button>
 </div>
 
 <script>
+function savePDF() {
+  const element = document.getElementById('main-content');
+
+  const opt = {
+    margin: 0.5,
+    filename: 'checklist.pdf',
+    image: {
+      type: 'jpeg',
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true
+    },
+    jsPDF: {
+      unit: 'in',
+      format: 'a4',
+      orientation: 'portrait'
+    },
+    pagebreak: {
+      mode: ['avoid-all', 'css', 'legacy']
+    }
+  };
+
+  html2pdf()
+    .set(opt)
+    .from(element)
+    .save();
+}
+
 const SECTIONS = [
   {
     title: "自分",
@@ -909,5 +939,6 @@ window.onAuthChanged = async (user) => {
 
 <!-- auth.js: Googleログイン/ログアウト処理 -->
 <script type="module" src="auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>
 </html>

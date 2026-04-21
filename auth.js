@@ -1,32 +1,62 @@
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
 export let currentUser = null;
 
 export function setAuthUI(user) {
-  const loginBtn = document.getElementById('login-btn');
+  const loginForm = document.getElementById('login-form');
   const logoutBtn = document.getElementById('logout-btn');
   const userInfo = document.getElementById('user-info');
+  const mainContent = document.getElementById('main-content');
+  const bottomBar = document.querySelector('.bottom-bar');
+
   if (user) {
-    loginBtn.style.display = 'none';
+    loginForm.style.display = 'none';
     logoutBtn.style.display = '';
-    userInfo.textContent = user.displayName ? `${user.displayName} でログイン中` : `ログイン中`;
+    userInfo.textContent = user.email + ' でログイン中';
+    mainContent.style.display = '';
+    if (bottomBar) bottomBar.style.display = '';
   } else {
-    loginBtn.style.display = '';
+    loginForm.style.display = '';
     logoutBtn.style.display = 'none';
     userInfo.textContent = '';
+    mainContent.style.display = 'none';
+    if (bottomBar) bottomBar.style.display = 'none';
   }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   const auth = getAuth();
-  const provider = new GoogleAuthProvider();
+
+  // ログインボタン
   document.getElementById('login-btn').onclick = async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = '';
+    if (!email || !password) {
+      errEl.textContent = 'メールアドレスとパスワードを入力してください';
+      return;
+    }
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (e) {
-      alert('ログイン失敗: ' + e.message);
+      errEl.textContent = 'ログイン失敗: メールアドレスまたはパスワードが違います';
     }
   };
+
+  // Enterキーでもログイン
+  ['login-email', 'login-password'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('login-btn').click();
+    });
+  });
+
+  // ログアウトボタン
   document.getElementById('logout-btn').onclick = async () => {
     try {
       await signOut(auth);
@@ -34,9 +64,11 @@ window.addEventListener('DOMContentLoaded', () => {
       alert('ログアウト失敗: ' + e.message);
     }
   };
+
+  // 認証状態の監視
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     setAuthUI(user);
-    if (window.onAuthChanged) window.onAuthChanged(user); // コールバックで他JSと連携
+    if (window.onAuthChanged) window.onAuthChanged(user);
   });
 });

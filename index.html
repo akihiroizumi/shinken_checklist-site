@@ -381,8 +381,49 @@
 
   .btn-reset:hover { background: rgba(255,255,255,0.2); }
 
+  .auth-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  #user-info {
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+
+  .btn-auth {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.78rem;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+
+  #login-btn {
+    background: var(--accent);
+    color: white;
+  }
+
+  #login-btn:hover { background: var(--accent-hover); }
+
+  #logout-btn {
+    background: rgba(255,255,255,0.15);
+    color: var(--cream);
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    display: none;
+  }
+
+  #logout-btn:hover { background: rgba(255,255,255,0.25); }
+
   @media print {
-    .bottom-bar, .btn-memo, .btn-delete-item, .add-item-form { display: none !important; }
+    .bottom-bar, .btn-memo, .btn-delete-item, .add-item-form, .auth-bar { display: none !important; }
     .memo-area { display: block !important; }
     body { background: white; }
     .section { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
@@ -397,6 +438,11 @@
     <div class="progress-bar-fill" id="progressFill"></div>
   </div>
   <div class="progress-label" id="progressLabel">0 / 0 項目完了</div>
+  <div class="auth-bar">
+    <span id="user-info"></span>
+    <button class="btn-auth" id="login-btn">Googleでログイン</button>
+    <button class="btn-auth" id="logout-btn">ログアウト</button>
+  </div>
 </header>
 
 <div class="container">
@@ -727,6 +773,8 @@ window.addEventListener('DOMContentLoaded', () => {
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
   // Firestore SDKのimport
   import { getFirestore } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+  // Firebase Auth SDKのimport
+  import { getAuth } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
   // Firebase設定
   const firebaseConfig = {
@@ -748,8 +796,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const db = getFirestore(app);
   window.db = db; // グローバル公開で他の関数から参照可能に
 
+  // Firebase Auth 初期化・グローバル公開
+  const auth = getAuth(app);
+  window.auth = auth;
+
   // 動作確認（F12 → Consoleで確認）
   console.log("Firestore DB 接続成功", db);
+  console.log("Firebase Auth 接続成功", auth);
 </script>
+
+<!-- auth.js: Googleログイン/ログアウト処理 -->
+<script type="module" src="auth.js"></script>
 </body>
 </html>

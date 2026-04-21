@@ -381,6 +381,84 @@
 
   .btn-reset:hover { background: rgba(255,255,255,0.2); }
 
+  /* ログインフォーム（ヘッダー外・全画面オーバーレイ） */
+  #login-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+
+  #login-form {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 8px 40px var(--shadow);
+    text-align: center;
+  }
+
+  #login-form h2 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  #login-form p {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-bottom: 24px;
+  }
+
+  #login-form input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.88rem;
+    color: var(--ink);
+    background: white;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+
+  #login-form input:focus { border-color: var(--accent); }
+
+  #login-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+
+  #login-btn:hover { background: var(--accent-hover); }
+
+  #login-error {
+    font-size: 0.78rem;
+    color: #c55;
+    margin-top: 10px;
+    min-height: 18px;
+  }
+
+  /* ヘッダーのauth-bar（ログイン後） */
   .auth-bar {
     display: flex;
     align-items: center;
@@ -393,30 +471,20 @@
     font-size: 0.8rem;
     color: var(--ink-faint);
     letter-spacing: 0.05em;
+    flex: 1;
   }
 
-  .btn-auth {
+  #logout-btn {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 0.78rem;
     padding: 6px 16px;
     border-radius: 8px;
     cursor: pointer;
-    border: none;
     letter-spacing: 0.05em;
     transition: all 0.2s;
-  }
-
-  #login-btn {
-    background: var(--accent);
-    color: white;
-  }
-
-  #login-btn:hover { background: var(--accent-hover); }
-
-  #logout-btn {
     background: rgba(255,255,255,0.15);
     color: var(--cream);
-    border: 1px solid rgba(255,255,255,0.25) !important;
+    border: 1px solid rgba(255,255,255,0.25);
     display: none;
   }
 
@@ -432,24 +500,38 @@
 </head>
 <body>
 
-<header>
-  <h1>真剣交際期間チェックリスト</h1>
-  <div class="progress-bar-wrap">
-    <div class="progress-bar-fill" id="progressFill"></div>
+<!-- ログインオーバーレイ -->
+<div id="login-overlay">
+  <div id="login-form">
+    <h2>真剣交際チェックリスト</h2>
+    <p>ログインしてください</p>
+    <input type="email" id="login-email" placeholder="メールアドレス" autocomplete="email">
+    <input type="password" id="login-password" placeholder="パスワード" autocomplete="current-password">
+    <button id="login-btn">ログイン</button>
+    <div id="login-error"></div>
   </div>
-  <div class="progress-label" id="progressLabel">0 / 0 項目完了</div>
-  <div class="auth-bar">
-    <span id="user-info"></span>
-    <button class="btn-auth" id="login-btn">Googleでログイン</button>
-    <button class="btn-auth" id="logout-btn">ログアウト</button>
-  </div>
-</header>
-
-<div class="container">
-  <div class="sections-grid" id="sectionsGrid"></div>
 </div>
 
-<div class="bottom-bar">
+<!-- メインコンテンツ（ログイン後に表示） -->
+<div id="main-content" style="display:none;">
+  <header>
+    <h1>真剣交際期間チェックリスト</h1>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">0 / 0 項目完了</div>
+    <div class="auth-bar">
+      <span id="user-info"></span>
+      <button id="logout-btn">ログアウト</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="sections-grid" id="sectionsGrid"></div>
+  </div>
+</div>
+
+<div class="bottom-bar" style="display:none;">
   <button class="btn-print" onclick="window.print()">🖨 印刷</button>
   <button class="btn-reset" onclick="resetAll()">リセット</button>
 </div>
@@ -546,6 +628,7 @@ function loadState() {
 
 function saveState() {
   try { localStorage.setItem('shinken_checklist', JSON.stringify(state)); } catch(e) {}
+  saveToFirestore();
 }
 
 function updateProgress() {
@@ -714,55 +797,74 @@ function autoResizeTextarea(el) {
 }
 
 
-// --- Firestoreにメモを保存する関数 ---
-// コメント: section番号・item番号・メモ内容をFirestoreに保存
-async function saveMemoToFirestore(si, ii) {
-  // Firestore SDKのimportが必要
-  const textarea = document.getElementById(`memo-area-${si}-${ii}`).querySelector('textarea');
-  const memoText = textarea.value;
-  // Firestore SDKの関数をimport（グローバルスコープでimport済みなら不要）
-  const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
+// --- sharedLists/list123 にstateを保存 ---
+async function saveToFirestore() {
+  const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
   try {
-    const docRef = await addDoc(collection(db, "memos"), {
-      section: si,
-      item: ii,
-      memo: memoText,
-      timestamp: serverTimestamp()
-    });
-    alert("メモをFirestoreに保存しました！");
-    console.log("Firestore保存成功: ", docRef.id);
+    await setDoc(doc(window.db, 'sharedLists', 'list123'), { state: state }, { merge: true });
   } catch (e) {
-    alert("Firestore保存失敗: " + e);
-    console.error("Firestore保存失敗: ", e);
+    console.error('Firestore保存失敗:', e);
   }
 }
 
-// --- Firestoreから全メモを取得しstateに反映する関数 ---
-// コメント: Firestoreのmemosコレクションから全メモを取得し、stateに反映
-async function loadMemosFromFirestore() {
-  const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
-  try {
-    const querySnapshot = await getDocs(collection(window.db, "memos"));
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      // section, item, memoが存在する場合のみ反映
-      if (typeof data.section === 'number' && typeof data.item === 'number' && typeof data.memo === 'string') {
-        if (state[data.section] && state[data.section].items[data.item]) {
-          state[data.section].items[data.item].memo = data.memo;
-        }
+// --- sharedLists/list123 からstateを読み込み ---
+async function loadFromFirestore() {
+  const { doc, getDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
+  const docRef = doc(window.db, 'sharedLists', 'list123');
+  // リアルタイム同期
+  onSnapshot(docRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      if (data.state) {
+        // 各セクションのitemsをマージ（ラベル・subはSECTIONSのものを優先）
+        SECTIONS.forEach((sec, si) => {
+          const saved = data.state[si];
+          if (saved && saved.items) {
+            state[si] = {
+              items: sec.items.map((it, ii) => {
+                const s = saved.items[ii];
+                return {
+                  label: it.label,
+                  sub: it.sub || '',
+                  checked: s ? !!s.checked : false,
+                  memo: s ? (s.memo || '') : ''
+                };
+              })
+            };
+            // 追加アイテム（カスタム追加分）
+            if (saved.items.length > sec.items.length) {
+              for (let ii = sec.items.length; ii < saved.items.length; ii++) {
+                state[si].items.push(saved.items[ii]);
+              }
+            }
+          }
+        });
       }
-    });
+    }
     renderAll();
-    console.log("Firestoreからメモを取得・反映しました");
-  } catch (e) {
-    console.error("Firestoreからのメモ取得失敗: ", e);
-  }
+  });
 }
 
-// ページ読み込み時にFirestoreからメモを取得して反映
-window.addEventListener('DOMContentLoaded', () => {
-  loadMemosFromFirestore();
-});
+// メモ保存ボタン → Firestoreに保存
+function saveMemoToFirestore(si, ii) {
+  const textarea = document.getElementById(`memo-area-${si}-${ii}`).querySelector('textarea');
+  state[si].items[ii].memo = textarea.value;
+  saveState();
+  saveToFirestore();
+  const btn = document.getElementById(`btn-memo-${si}-${ii}`);
+  if (btn) btn.classList.toggle('active', !!textarea.value);
+}
+
+// 認証後にFirestoreからデータを読み込む
+window.onAuthChanged = async (user) => {
+  const overlay = document.getElementById('login-overlay');
+  if (user) {
+    overlay.style.display = 'none';
+    await loadFromFirestore();
+  } else {
+    overlay.style.display = 'flex';
+  }
+};
 </script>
 <!-- =========================
  Firebase Firestore（データベース）接続用スクリプト追加

@@ -574,7 +574,8 @@ function savePDF() {
   );
   if (isInApp && window.top === window.self) {
     // 外部アプリ内ブラウザなら新しいタブで自分自身を開く
-    window.open(window.location.href + '?pdf=1', '_blank');
+    const win = window.open(window.location.href + '?pdf=1', '_blank');
+    if (win) win.focus();
     alert('PDF保存はブラウザで開いてからご利用ください。\n新しいタブが開きますので、そちらでPDF保存を実行してください。');
     return;
   }

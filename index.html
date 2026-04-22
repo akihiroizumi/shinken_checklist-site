@@ -561,36 +561,26 @@
   <button class="btn-reset" onclick="resetAll()">リセット</button>
 </div>
 
-<!-- アプリ内ブラウザ向け案内モーダル -->
-<div id="inapp-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:#fff9f4; border-radius:20px; padding:32px 28px; max-width:320px; width:90%; text-align:center; box-shadow:0 8px 40px rgba(42,33,24,0.2);">
-    <div style="font-size:2rem; margin-bottom:12px;">🌐</div>
-    <p style="font-family:'Noto Serif JP',serif; font-size:1rem; font-weight:600; color:#2a2118; margin-bottom:10px; letter-spacing:0.08em;">ブラウザで開いてください</p>
-    <p style="font-size:0.82rem; color:#b8a898; line-height:1.7; margin-bottom:24px;">PDF保存はLINEアプリ内では<br>ご利用いただけません。<br>右下の <strong style="color:#2a2118;">「…」→「ブラウザで開く」</strong><br>をタップしてからお試しください。</p>
-    <button onclick="document.getElementById('inapp-modal').style.display='none'" style="background:#c4856a; color:white; border:none; border-radius:10px; padding:10px 32px; font-family:'Noto Sans JP',sans-serif; font-size:0.88rem; cursor:pointer; letter-spacing:0.05em;">閉じる</button>
-  </div>
-</div>
-
 <script>
-function isInAppBrowser() {
+function savePDF() {
+  // LINEや外部アプリ内ブラウザの場合はwindow.openで自分自身を開き直す
   const ua = navigator.userAgent.toLowerCase();
-  return (
+  const isLine = ua.indexOf('line') !== -1;
+  const isInApp = (
     ua.indexOf('line') !== -1 ||
     ua.indexOf('fbav') !== -1 ||
     ua.indexOf('instagram') !== -1 ||
     ua.indexOf('twitter') !== -1
   );
-}
-
-function savePDF() {
-  // アプリ内ブラウザ（LINE等）の場合は案内モーダルを表示
-  if (isInAppBrowser()) {
-    const modal = document.getElementById('inapp-modal');
-    modal.style.display = 'flex';
+  if (isInApp && window.top === window.self) {
+    // 外部アプリ内ブラウザなら新しいタブで自分自身を開く
+    const win = window.open(window.location.href + '?pdf=1', '_blank');
+    if (win) win.focus();
+    alert('PDF保存はブラウザで開いてからご利用ください。\n新しいタブが開きますので、そちらでPDF保存を実行してください。');
     return;
   }
 
-  // 通常のブラウザの場合はPDF保存を実行
+  // 通常のブラウザ、または?pdf=1で開かれた場合はPDF保存を実行
   const element = document.getElementById('main-content');
   const opt = {
     margin: 0.4,

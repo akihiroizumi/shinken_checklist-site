@@ -34,9 +34,9 @@
     background: var(--ink);
     color: var(--cream);
     padding: 36px 40px 30px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    /* position: sticky; */
+    /* top: 0; */
+    /* z-index: 100; */
     box-shadow: 0 2px 20px var(--shadow);
   }
 
@@ -547,8 +547,7 @@
     </div>
     <div class="progress-label" id="progressLabel">0 / 0 項目完了</div>
     <div class="auth-bar">
-      <span id="user-info"></span>
-      <button id="logout-btn">ログアウト</button>
+        <button id="logout-btn">ログアウト</button>
     </div>
   </header>
 
@@ -564,34 +563,45 @@
 
 <script>
 function savePDF() {
-  const element = document.getElementById('main-content');
+  // LINEや外部アプリ内ブラウザの場合はwindow.openで自分自身を開き直す
+  const ua = navigator.userAgent.toLowerCase();
+  const isLine = ua.indexOf('line') !== -1;
+  const isInApp = (
+    ua.indexOf('line') !== -1 ||
+    ua.indexOf('fbav') !== -1 ||
+    ua.indexOf('instagram') !== -1 ||
+    ua.indexOf('twitter') !== -1
+  );
+  if (isInApp && window.top === window.self) {
+    // 外部アプリ内ブラウザなら新しいタブで自分自身を開く
+    window.open(window.location.href + '?pdf=1', '_blank');
+    alert('PDF保存はブラウザで開いてからご利用ください。\n新しいタブが開きますので、そちらでPDF保存を実行してください。');
+    return;
+  }
 
+  // 通常のブラウザ、または?pdf=1で開かれた場合はPDF保存を実行
+  const element = document.getElementById('main-content');
   const opt = {
     margin: 0.4,
     filename: 'checklist.pdf',
-
     image: {
       type: 'jpeg',
       quality: 0.98
     },
-
     html2canvas: {
       scale: 2,
       useCORS: true
     },
-
     jsPDF: {
       unit: 'in',
       format: 'a4',
       orientation: 'portrait'
     },
-
     pagebreak: {
       mode: ['css'],
       avoid: ['.section']
     }
   };
-
   html2pdf()
     .set(opt)
     .from(element)
@@ -759,6 +769,7 @@ function renderItems(si) {
       <div class="memo-area${item.memo ? ' open' : ''}" id="memo-area-${si}-${ii}">
         <textarea placeholder="メモを入力…" onchange="saveMemo(${si},${ii},this.value)" oninput="autoResizeTextarea(this)">${item.memo || ''}</textarea>
         <button class="btn-add-item" style="margin-top:6px;float:right;" onclick="saveMemoToFirestore(${si},${ii})">保存</button>
+        <span class="memo-saved-message" id="memo-saved-msg-${si}-${ii}" style="display:none;color:var(--accent);font-size:0.8em;margin-right:10px;float:left;">保存されました</span>
       </div>
     `;
     container.appendChild(el);
@@ -914,6 +925,12 @@ function saveMemoToFirestore(si, ii) {
   saveToFirestore();
   const btn = document.getElementById(`btn-memo-${si}-${ii}`);
   if (btn) btn.classList.toggle('active', !!textarea.value);
+  // 「保存されました」表示
+  const msg = document.getElementById(`memo-saved-msg-${si}-${ii}`);
+  if (msg) {
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 1500);
+  }
 }
 
 // 認証後にFirestoreからデータを読み込む

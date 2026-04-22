@@ -17,13 +17,13 @@ export function setAuthUI(user) {
   if (user) {
     loginForm.style.display = 'none';
     logoutBtn.style.display = '';
-    userInfo.textContent = user.email + ' でログイン中';
+    // userInfo.textContent = user.email + ' でログイン中'; // 表示しない
     mainContent.style.display = '';
     if (bottomBar) bottomBar.style.display = '';
   } else {
     loginForm.style.display = '';
     logoutBtn.style.display = 'none';
-    userInfo.textContent = '';
+    // userInfo.textContent = '';
     mainContent.style.display = 'none';
     if (bottomBar) bottomBar.style.display = 'none';
   }

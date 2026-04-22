@@ -562,25 +562,17 @@
 </div>
 
 <script>
-function savePDF() {
-  // LINEや外部アプリ内ブラウザの場合はwindow.openで自分自身を開き直す
+function isInAppBrowser() {
   const ua = navigator.userAgent.toLowerCase();
-  const isLine = ua.indexOf('line') !== -1;
-  const isInApp = (
+  return (
     ua.indexOf('line') !== -1 ||
     ua.indexOf('fbav') !== -1 ||
     ua.indexOf('instagram') !== -1 ||
     ua.indexOf('twitter') !== -1
   );
-  if (isInApp && window.top === window.self) {
-    // 外部アプリ内ブラウザなら新しいタブで自分自身を開く
-    const win = window.open(window.location.href + '?pdf=1', '_blank');
-    if (win) win.focus();
-    alert('PDF保存はブラウザで開いてからご利用ください。\n新しいタブが開きますので、そちらでPDF保存を実行してください。');
-    return;
-  }
+}
 
-  // 通常のブラウザ、または?pdf=1で開かれた場合はPDF保存を実行
+function executePDFSave() {
   const element = document.getElementById('main-content');
   const opt = {
     margin: 0.4,
@@ -607,6 +599,19 @@ function savePDF() {
     .set(opt)
     .from(element)
     .save();
+}
+
+function savePDF() {
+  // アプリ内ブラウザ（LINE等）の場合：同タブで ?pdf=1 に遷移させる
+  // window.open は WebView でブロックされるケースが多いため使用しない
+  if (isInAppBrowser()) {
+    const baseUrl = window.location.href.split('?')[0];
+    window.location.href = baseUrl + '?pdf=1';
+    return;
+  }
+
+  // 通常のブラウザの場合はそのままPDF保存を実行
+  executePDFSave();
 }
 
 const SECTIONS = [
@@ -940,6 +945,18 @@ window.onAuthChanged = async (user) => {
   if (user) {
     overlay.style.display = 'none';
     await loadFromFirestore();
+
+    // ?pdf=1 パラメータがある場合、データ描画後に自動でPDF保存を実行
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('pdf') === '1') {
+      // URLから ?pdf=1 を除去（履歴を汚さないように replaceState）
+      const cleanUrl = window.location.href.split('?')[0];
+      window.history.replaceState({}, document.title, cleanUrl);
+      // renderAll + Firestore の onSnapshot 完了を少し待ってから実行
+      setTimeout(() => {
+        executePDFSave();
+      }, 800);
+    }
   } else {
     overlay.style.display = 'flex';
   }

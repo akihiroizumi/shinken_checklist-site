@@ -561,6 +561,16 @@
   <button class="btn-reset" onclick="resetAll()">リセット</button>
 </div>
 
+<!-- アプリ内ブラウザ向け案内モーダル -->
+<div id="inapp-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff9f4; border-radius:20px; padding:32px 28px; max-width:320px; width:90%; text-align:center; box-shadow:0 8px 40px rgba(42,33,24,0.2);">
+    <div style="font-size:2rem; margin-bottom:12px;">🌐</div>
+    <p style="font-family:'Noto Serif JP',serif; font-size:1rem; font-weight:600; color:#2a2118; margin-bottom:10px; letter-spacing:0.08em;">ブラウザで開いてください</p>
+    <p style="font-size:0.82rem; color:#b8a898; line-height:1.7; margin-bottom:24px;">PDF保存はLINEアプリ内では<br>ご利用いただけません。<br>右下の <strong style="color:#2a2118;">「…」→「ブラウザで開く」</strong><br>をタップしてからお試しください。</p>
+    <button onclick="document.getElementById('inapp-modal').style.display='none'" style="background:#c4856a; color:white; border:none; border-radius:10px; padding:10px 32px; font-family:'Noto Sans JP',sans-serif; font-size:0.88rem; cursor:pointer; letter-spacing:0.05em;">閉じる</button>
+  </div>
+</div>
+
 <script>
 function isInAppBrowser() {
   const ua = navigator.userAgent.toLowerCase();
@@ -572,7 +582,15 @@ function isInAppBrowser() {
   );
 }
 
-function executePDFSave() {
+function savePDF() {
+  // アプリ内ブラウザ（LINE等）の場合は案内モーダルを表示
+  if (isInAppBrowser()) {
+    const modal = document.getElementById('inapp-modal');
+    modal.style.display = 'flex';
+    return;
+  }
+
+  // 通常のブラウザの場合はPDF保存を実行
   const element = document.getElementById('main-content');
   const opt = {
     margin: 0.4,
@@ -599,19 +617,6 @@ function executePDFSave() {
     .set(opt)
     .from(element)
     .save();
-}
-
-function savePDF() {
-  // アプリ内ブラウザ（LINE等）の場合：同タブで ?pdf=1 に遷移させる
-  // window.open は WebView でブロックされるケースが多いため使用しない
-  if (isInAppBrowser()) {
-    const baseUrl = window.location.href.split('?')[0];
-    window.location.href = baseUrl + '?pdf=1';
-    return;
-  }
-
-  // 通常のブラウザの場合はそのままPDF保存を実行
-  executePDFSave();
 }
 
 const SECTIONS = [
@@ -945,18 +950,6 @@ window.onAuthChanged = async (user) => {
   if (user) {
     overlay.style.display = 'none';
     await loadFromFirestore();
-
-    // ?pdf=1 パラメータがある場合、データ描画後に自動でPDF保存を実行
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('pdf') === '1') {
-      // URLから ?pdf=1 を除去（履歴を汚さないように replaceState）
-      const cleanUrl = window.location.href.split('?')[0];
-      window.history.replaceState({}, document.title, cleanUrl);
-      // renderAll + Firestore の onSnapshot 完了を少し待ってから実行
-      setTimeout(() => {
-        executePDFSave();
-      }, 800);
-    }
   } else {
     overlay.style.display = 'flex';
   }

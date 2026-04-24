@@ -551,6 +551,24 @@
     resize: none !important;
   }
 
+  /* ===== PDF専用制御 ===== */
+.pdf-mode .bottom-bar,
+.pdf-mode .auth-bar,
+.pdf-mode .add-item-form,
+.pdf-mode .btn-memo,
+.pdf-mode .btn-delete-item,
+.pdf-mode .memo-area .btn-add-item,
+.pdf-mode .memo-saved-message {
+  display: none !important;
+}
+
+/* メモ欄の改ページ防止 */
+.memo-area,
+.memo-area div {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
 </style>
 </head>
 <body>
@@ -606,60 +624,50 @@ function savePDF() {
 
   const element = document.getElementById('main-content');
 
-  // ① メモエリアをすべて表示状態に（display:noneだとhtml2canvasがキャプチャできない）
+  // ===== ① PDFモードON（←これがチラつき防止の核心）
+  document.body.classList.add('pdf-mode');
+
+  // ===== ② メモエリアを強制表示（元に戻せるように記録）
   const memoAreas = element.querySelectorAll('.memo-area');
   const closedMemos = [];
+
   memoAreas.forEach(area => {
     if (!area.classList.contains('open')) {
-      // 内容があるものだけ表示する
-      const ta = area.querySelector('textarea');
-      if (ta && ta.value.trim()) {
-        area.classList.add('open');
-        closedMemos.push(area);
-      }
+      area.classList.add('open');
+      closedMemos.push(area);
     }
   });
 
-  // ② textareaをdivに置き換え（html2pdfはtextareaの内容を描画できない）
+  // ===== ③ textarea → div に置き換え
   const textareas = element.querySelectorAll('textarea');
   const replacements = [];
+
   textareas.forEach(ta => {
     const div = document.createElement('div');
-    div.style.cssText = [
-      'font-family:"Noto Sans JP",sans-serif',
-      'font-size:0.82rem',
-      'color:#2a2118',
-      'background:white',
-      'border:1px solid #e8ddd5',
-      'border-radius:8px',
-      'padding:8px 12px',
-      'white-space:pre-wrap',
-      'word-break:break-all',
-      'min-height:20px',
-    ].join(';');
+
+    div.style.cssText = `
+      font-family:"Noto Sans JP",sans-serif;
+      font-size:0.82rem;
+      color:#2a2118;
+      background:white;
+      border:1px solid #e8ddd5;
+      border-radius:8px;
+      padding:8px 12px;
+      white-space:pre-wrap;
+      word-break:break-all;
+      min-height:20px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    `;
+
     div.textContent = ta.value || '';
     ta.parentNode.insertBefore(div, ta);
     ta.style.display = 'none';
+
     replacements.push({ ta, div });
   });
 
-  // ③ UIパーツを非表示
-  const bottomBar = document.querySelector('.bottom-bar');
-  const authBar = document.querySelector('.auth-bar');
-  const addForms = element.querySelectorAll('.add-item-form');
-  const btnMemos = element.querySelectorAll('.btn-memo');
-  const btnDeletes = element.querySelectorAll('.btn-delete-item');
-  const saveButtons = element.querySelectorAll('.memo-area .btn-add-item');
-  const savedMsgs = element.querySelectorAll('.memo-saved-message');
-  if (bottomBar) bottomBar.style.visibility = 'hidden';
-  if (authBar) authBar.style.display = 'none';
-  addForms.forEach(el => el.style.display = 'none');
-  btnMemos.forEach(el => el.style.display = 'none');
-  btnDeletes.forEach(el => el.style.display = 'none');
-  saveButtons.forEach(el => el.style.display = 'none');
-  savedMsgs.forEach(el => el.style.display = 'none');
-
-  // ④ グリッドを1カラムに
+  // ===== ④ 1カラム化
   const grid = document.getElementById('sectionsGrid');
   const origColumns = grid.style.gridTemplateColumns;
   grid.style.gridTemplateColumns = '1fr';
@@ -670,22 +678,20 @@ function savePDF() {
     image: { type: 'jpeg', quality: 0.92 },
     html2canvas: { scale: 1.5, useCORS: true, logging: false },
     jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['css'], avoid: ['.section'] }
+    pagebreak: {
+      mode: ['css'],
+      avoid: ['.section', '.memo-area']
+    }
   };
-
   html2pdf().set(opt).from(element).save().then(() => {
-    // 元に戻す
+  closedMemos.forEach(area => area.classList.remove('open'));
+    // ===== 元に戻す
     replacements.forEach(({ ta, div }) => {
       div.remove();
       ta.style.display = '';
     });
-    closedMemos.forEach(area => area.classList.remove('open'));
-    if (bottomBar) bottomBar.style.visibility = '';
-    if (authBar) authBar.style.display = '';
-    addForms.forEach(el => el.style.display = '');
-    btnMemos.forEach(el => el.style.display = '');
-    btnDeletes.forEach(el => el.style.display = '');
-    saveButtons.forEach(el => el.style.display = '');
+
+    document.body.classList.remove('pdf-mode');
     grid.style.gridTemplateColumns = origColumns;
   });
 }

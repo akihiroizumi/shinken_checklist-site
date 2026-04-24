@@ -1,21 +1,27 @@
-  /* PDF・印刷時の中央揃え解除とメモ欄の改行・文字切れ対策 */
-  @media print {
-    .container, .sections-grid {
-      margin: 0 !important;
-      justify-content: flex-start !important;
-      align-items: flex-start !important;
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>真剣交際期間チェックリスト</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* PDF・印刷時の中央揃え解除とメモ欄の改行・文字切れ対策 */
+    @media print {
+      .container, .sections-grid {
+        margin: 0 !important;
+        justify-content: flex-start !important;
+        align-items: flex-start !important;
+      }
+      .memo-area, .memo-area * {
+        white-space: pre-line !important;
+        word-break: break-all !important;
+      }
     }
-    .memo-area, .memo-area * {
-      white-space: pre-line !important;
-      word-break: break-all !important;
-    }
-  }
 
-  /* 画面表示時もメモ欄の改行・文字切れ対策 */
-  .memo-area, .memo-area * {
-    white-space: pre-line;
-    word-break: break-all;
-  }
+    /* 画面表示時もメモ欄の改行・文字切れ対策 */
+    .memo-area, .memo-area * {
+      white-space: pre-line;
+      word-break: break-all;
+    }
 <!DOCTYPE html>
 <html lang="ja">
 <head>

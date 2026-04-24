@@ -1,3 +1,21 @@
+  /* PDF・印刷時の中央揃え解除とメモ欄の改行・文字切れ対策 */
+  @media print {
+    .container, .sections-grid {
+      margin: 0 !important;
+      justify-content: flex-start !important;
+      align-items: flex-start !important;
+    }
+    .memo-area, .memo-area * {
+      white-space: pre-line !important;
+      word-break: break-all !important;
+    }
+  }
+
+  /* 画面表示時もメモ欄の改行・文字切れ対策 */
+  .memo-area, .memo-area * {
+    white-space: pre-line;
+    word-break: break-all;
+  }
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -573,10 +591,8 @@ function savePDF() {
     ua.indexOf('twitter') !== -1
   );
   if (isInApp && window.top === window.self) {
-    // 外部アプリ内ブラウザなら新しいタブで自分自身を開く
-    const win = window.open(window.location.href + '?pdf=1', '_blank');
-    if (win) win.focus();
-    alert('PDF保存はブラウザで開いてからご利用ください。\n新しいタブが開きますので、そちらでPDF保存を実行してください。');
+    // 外部アプリ内ブラウザの場合はアラートのみ表示
+    alert('PDF保存はブラウザで開いてからご利用ください。');
     return;
   }
 

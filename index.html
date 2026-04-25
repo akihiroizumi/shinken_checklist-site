@@ -624,10 +624,16 @@ function savePDF() {
 
   const element = document.getElementById('main-content');
 
-  // ===== ① PDFモードON（←これがチラつき防止の核心）
-  document.body.classList.add('pdf-mode');
+  // ===== ① スクロール位置を保存
+  const scrollY = window.scrollY;
+  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-  // ===== ② メモエリアを強制表示（元に戻せるように記録）
+  // ===== ② PDFモードON + スクロールバー幅確保（←これがチラつき防止の核心）
+  document.body.classList.add('pdf-mode');
+  document.body.style.overflow = 'hidden';
+  document.body.style.paddingRight = scrollbarWidth + 'px';
+
+  // ===== ③ メモエリアを強制表示（元に戻せるように記録）
   const memoAreas = element.querySelectorAll('.memo-area');
   const closedMemos = [];
 
@@ -638,7 +644,7 @@ function savePDF() {
     }
   });
 
-  // ===== ③ textarea → div に置き換え
+  // ===== ④ textarea → div に置き換え
   const textareas = element.querySelectorAll('textarea');
   const replacements = [];
 
@@ -667,7 +673,7 @@ function savePDF() {
     replacements.push({ ta, div });
   });
 
-  // ===== ④ 1カラム化
+  // ===== ⑤ 1カラム化
   const grid = document.getElementById('sectionsGrid');
   const origColumns = grid.style.gridTemplateColumns;
   grid.style.gridTemplateColumns = '1fr';
@@ -684,7 +690,8 @@ function savePDF() {
     }
   };
   html2pdf().set(opt).from(element).save().then(() => {
-  closedMemos.forEach(area => area.classList.remove('open'));
+    closedMemos.forEach(area => area.classList.remove('open'));
+    
     // ===== 元に戻す
     replacements.forEach(({ ta, div }) => {
       div.remove();
@@ -692,7 +699,12 @@ function savePDF() {
     });
 
     document.body.classList.remove('pdf-mode');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
     grid.style.gridTemplateColumns = origColumns;
+    
+    // ===== スクロール位置を復元
+    window.scrollTo(0, scrollY);
   });
 }
 

@@ -611,44 +611,78 @@
 <script>
 function savePDF() {
   const ua = navigator.userAgent.toLowerCase();
-
-  // アプリ内ブラウザ判定
-  const isInApp = (
-    ua.includes('line') ||
-    ua.includes('fbav') ||
-    ua.includes('instagram') ||
-    ua.includes('twitter')
-  );
-
-  // 👉 ここ残す（重要）
+  const isInApp = ua.includes('line') || ua.includes('fbav') || ua.includes('instagram') || ua.includes('twitter');
   if (isInApp) {
     alert('PDF保存はブラウザで開いてからご利用ください。');
     return;
   }
 
   const btn = document.querySelector('.btn-print');
-
-  // iOSヒント
-  const isIOS = /iphone|ipad/i.test(ua);
-  if (isIOS) {
-    alert('共有ボタン → 「PDFを保存」を選択してください');
-  }
-
-  // ローディング演出
   btn.disabled = true;
   btn.textContent = 'PDF生成中...';
 
-  document.body.classList.add('printing');
+  // ① main-contentを一時的にvisible化
+  const mainContent = document.getElementById('main-content');
+  mainContent.style.display = 'block';
 
+  // ② クローン作成
+  const clone = mainContent.cloneNode(true);
+  clone.style.cssText = 'display:block;position:fixed;left:-9999px;top:0;width:794px;background:white;color:#2a2118;';
+
+  // ③ pdf-modeクラス付与
+  clone.classList.add('pdf-mode');
+
+  // ④ section-bodyを全部表示
+  clone.querySelectorAll('.section-body').forEach(b => b.style.display = 'block');
+
+  // ⑤ メモエリアを全部開く
+  clone.querySelectorAll('.memo-area').forEach(a => {
+    a.classList.add('open');
+    a.style.display = 'block';
+  });
+
+  // ⑥ textareaをdivに置換（値を保持）
+  clone.querySelectorAll('textarea').forEach(ta => {
+    // オリジナルのtextareaから値を取得
+    const originalId = ta.closest('[id]') ? ta.closest('[id]').id : null;
+    const div = document.createElement('div');
+    div.style.cssText = 'font-family:"Noto Sans JP",sans-serif;font-size:0.82rem;color:#2a2118;background:white;border:1px solid #e8ddd5;border-radius:8px;padding:8px 12px;white-space:pre-wrap;word-break:break-all;min-height:20px;';
+    div.textContent = ta.value || ta.textContent || '';
+    ta.replaceWith(div);
+  });
+
+  // ⑦ 1カラム化
+  const grid = clone.querySelector('#sectionsGrid');
+  if (grid) grid.style.gridTemplateColumns = '1fr';
+
+  // ⑧ ボタン類を非表示
+  clone.querySelectorAll('.bottom-bar, .auth-bar, .add-item-form, .btn-memo, .btn-delete-item, .btn-add-item, .memo-saved-message').forEach(el => el.style.display = 'none');
+
+  document.body.appendChild(clone);
+
+  // ⑨ レイアウト確定を待つ
   setTimeout(() => {
-    window.print();
+    const opt = {
+      margin: [0.4, 0.4, 0.4, 0.4],
+      filename: 'checklist.pdf',
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css'], avoid: ['.section', '.memo-area'] }
+    };
 
-    setTimeout(() => {
-      document.body.classList.remove('printing');
+    html2pdf().set(opt).from(clone).save().then(() => {
+      document.body.removeChild(clone);
       btn.disabled = false;
       btn.textContent = '📄 PDF保存';
-    }, 1000);
-  }, 100);
+    }).catch(err => {
+      console.error('PDF生成エラー:', err);
+      document.body.removeChild(clone);
+      btn.disabled = false;
+      btn.textContent = '📄 PDF保存';
+      alert('PDF生成に失敗しました。再度お試しください。');
+    });
+  }, 500);
 }
 
 const SECTIONS = [

@@ -488,21 +488,6 @@
     }
   }
 
-  /* PDF生成モード */
-  .pdf-mode .auth-bar,
-  .pdf-mode .add-item-form,
-  .pdf-mode .btn-memo,
-  .pdf-mode .btn-delete-item,
-  .pdf-mode .memo-footer,
-  .pdf-mode .memo-textarea { display: none !important; }
-
-  .pdf-mode .memo-area { display: block !important; }
-  .pdf-mode .memo-display { display: block !important; }
-
-  .memo-area, .memo-display {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
 </style>
 </head>
 <body>
@@ -920,30 +905,6 @@ window.onAuthChanged = async (user) => {
 
   console.log("Firestore DB 接続成功", db);
   console.log("Firebase Auth 接続成功", auth);
-
-  // ===== PDF自動起動 =====
-function isInAppBrowser() {
-  const ua = navigator.userAgent.toLowerCase();
-  return (
-    ua.includes('line') ||
-    ua.includes('fbav') ||
-    ua.includes('instagram') ||
-    ua.includes('twitter')
-  );
-}
-
-window.addEventListener('load', () => {
-
-  // LINEなどはブロック
-  if (isInAppBrowser()) {
-    alert('PDF保存はブラウザで開いてからご利用ください。');
-    return;
-  }
-
-  // PDFモード
-  document.body.classList.add('pdf-mode');
-
-});
 
 </script>
 

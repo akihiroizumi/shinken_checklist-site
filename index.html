@@ -611,58 +611,44 @@
 <script>
 function savePDF() {
   const ua = navigator.userAgent.toLowerCase();
+
+  // アプリ内ブラウザ判定
   const isInApp = (
-    ua.indexOf('line') !== -1 ||
-    ua.indexOf('fbav') !== -1 ||
-    ua.indexOf('instagram') !== -1 ||
-    ua.indexOf('twitter') !== -1
+    ua.includes('line') ||
+    ua.includes('fbav') ||
+    ua.includes('instagram') ||
+    ua.includes('twitter')
   );
-  if (isInApp && window.top === window.self) {
+
+  // 👉 ここ残す（重要）
+  if (isInApp) {
     alert('PDF保存はブラウザで開いてからご利用ください。');
     return;
   }
 
- const original = document.getElementById('main-content');
-  const clone = original.cloneNode(true);
+  const btn = document.querySelector('.btn-print');
 
-  clone.style.display = 'block';
-  clone.classList.add('pdf-mode');
+  // iOSヒント
+  const isIOS = /iphone|ipad/i.test(ua);
+  if (isIOS) {
+    alert('共有ボタン → 「PDFを保存」を選択してください');
+  }
 
-  clone.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 800px;
-    opacity: 0;
-    pointer-events: none;
-    background: white;
-    color: #2a2118;
-  `;
+  // ローディング演出
+  btn.disabled = true;
+  btn.textContent = 'PDF生成中...';
 
-  document.body.appendChild(clone);
+  document.body.classList.add('printing');
 
-  const run = async () => {
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
-    }
+  setTimeout(() => {
+    window.print();
 
-    document.body.style.overflow = 'hidden';
-
-    const opt = {
-      margin: [0.4, 0.4, 0.4, 0.4],
-      filename: 'checklist.pdf',
-      image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 1.5, useCORS: true },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
-
-    await html2pdf().set(opt).from(clone).save();
-
-    document.body.style.overflow = '';
-    document.body.removeChild(clone);
-  };
-
-  requestAnimationFrame(run);
+    setTimeout(() => {
+      document.body.classList.remove('printing');
+      btn.disabled = false;
+      btn.textContent = '📄 PDF保存';
+    }, 1000);
+  }, 100);
 }
 
 const SECTIONS = [

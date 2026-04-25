@@ -617,72 +617,78 @@ function savePDF() {
     return;
   }
 
+  const element = document.getElementById('main-content');
   const btn = document.querySelector('.btn-print');
   btn.disabled = true;
   btn.textContent = 'PDF生成中...';
 
-  // ① main-contentを一時的にvisible化
-  const mainContent = document.getElementById('main-content');
-  mainContent.style.display = 'block';
+  const scrollY = window.scrollY;
+  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-  // ② クローン作成
-  const clone = mainContent.cloneNode(true);
-  clone.style.cssText = 'display:block;position:fixed;left:-9999px;top:0;width:794px;background:white;color:#2a2118;';
+  // pdf-modeON
+  document.body.classList.add('pdf-mode');
+  document.body.style.overflow = 'hidden';
+  document.body.style.paddingRight = scrollbarWidth + 'px';
 
-  // ③ pdf-modeクラス付与
-  clone.classList.add('pdf-mode');
-
-  // ④ section-bodyを全部表示
-  clone.querySelectorAll('.section-body').forEach(b => b.style.display = 'block');
-
-  // ⑤ メモエリアを全部開く
-  clone.querySelectorAll('.memo-area').forEach(a => {
-    a.classList.add('open');
-    a.style.display = 'block';
+  // section-bodyを全部表示
+  const hiddenBodies = [];
+  document.querySelectorAll('.section-body').forEach(b => {
+    if (b.style.display === 'none') {
+      b.style.display = '';
+      hiddenBodies.push(b);
+    }
   });
 
-  // ⑥ textareaをdivに置換（値を保持）
-  clone.querySelectorAll('textarea').forEach(ta => {
-    // オリジナルのtextareaから値を取得
-    const originalId = ta.closest('[id]') ? ta.closest('[id]').id : null;
+  // メモエリアを全部開く
+  const closedMemos = [];
+  document.querySelectorAll('.memo-area').forEach(area => {
+    if (!area.classList.contains('open')) {
+      area.classList.add('open');
+      closedMemos.push(area);
+    }
+  });
+
+  // textareaをdivに置換（stateから値を取得）
+  const replacements = [];
+  document.querySelectorAll('textarea').forEach(ta => {
     const div = document.createElement('div');
     div.style.cssText = 'font-family:"Noto Sans JP",sans-serif;font-size:0.82rem;color:#2a2118;background:white;border:1px solid #e8ddd5;border-radius:8px;padding:8px 12px;white-space:pre-wrap;word-break:break-all;min-height:20px;';
-    div.textContent = ta.value || ta.textContent || '';
-    ta.replaceWith(div);
+    div.textContent = ta.value || '';
+    ta.parentNode.insertBefore(div, ta);
+    ta.style.display = 'none';
+    replacements.push({ ta, div });
   });
 
-  // ⑦ 1カラム化
-  const grid = clone.querySelector('#sectionsGrid');
-  if (grid) grid.style.gridTemplateColumns = '1fr';
+  // 1カラム化
+  const grid = document.getElementById('sectionsGrid');
+  const origColumns = grid.style.gridTemplateColumns;
+  grid.style.gridTemplateColumns = '1fr';
 
-  // ⑧ ボタン類を非表示
-  clone.querySelectorAll('.bottom-bar, .auth-bar, .add-item-form, .btn-memo, .btn-delete-item, .btn-add-item, .memo-saved-message').forEach(el => el.style.display = 'none');
+  const opt = {
+    margin: [0.4, 0.4, 0.4, 0.4],
+    filename: 'checklist.pdf',
+    image: { type: 'jpeg', quality: 0.92 },
+    html2canvas: { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['css'], avoid: ['.section', '.memo-area'] }
+  };
 
-  document.body.appendChild(clone);
-
-  // ⑨ レイアウト確定を待つ
-  setTimeout(() => {
-    const opt = {
-      margin: [0.4, 0.4, 0.4, 0.4],
-      filename: 'checklist.pdf',
-      image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css'], avoid: ['.section', '.memo-area'] }
-    };
-
-    html2pdf().set(opt).from(clone).save().then(() => {
-      document.body.removeChild(clone);
-      btn.disabled = false;
-      btn.textContent = '📄 PDF保存';
-    }).catch(err => {
-      console.error('PDF生成エラー:', err);
-      document.body.removeChild(clone);
-      btn.disabled = false;
-      btn.textContent = '📄 PDF保存';
-      alert('PDF生成に失敗しました。再度お試しください。');
+  html2pdf().set(opt).from(element).save().then(() => {
+    // 元に戻す
+    closedMemos.forEach(area => area.classList.remove('open'));
+    hiddenBodies.forEach(b => b.style.display = 'none');
+    replacements.forEach(({ ta, div }) => {
+      div.remove();
+      ta.style.display = '';
     });
-  }, 500);
+    document.body.classList.remove('pdf-mode');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    grid.style.gridTemplateColumns = origColumns;
+    window.scrollTo(0, scrollY);
+    btn.disabled = false;
+    btn.textContent = '📄 PDF保存';
+  });
 }
 
 const SECTIONS = [

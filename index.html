@@ -610,19 +610,34 @@
 
 <script>
 function savePDF() {
-  // クローンを画面外に配置してPDF生成
   const original = document.getElementById('main-content');
   const clone = original.cloneNode(true);
 
-  // クローンにpdf-mode適用
+  // display:none を解除
+  clone.style.display = 'block';
+
+  // pdf-mode適用
   clone.classList.add('pdf-mode');
-  
+
+  // CSS変数をインライン色に置き換え
+  clone.style.color = '#2a2118';
+  clone.style.background = 'white';
+
   // textareaをdivに置換（クローン内で）
   clone.querySelectorAll('textarea').forEach(ta => {
     const div = document.createElement('div');
-    div.style.cssText = `font-family:"Noto Sans JP",sans-serif;font-size:0.82rem;
-      color:#2a2118;background:white;border:1px solid #e8ddd5;border-radius:8px;
-      padding:8px 12px;white-space:pre-wrap;word-break:break-all;min-height:20px;`;
+    div.style.cssText = `
+      font-family:"Noto Sans JP",sans-serif;
+      font-size:0.82rem;
+      color:#2a2118;
+      background:white;
+      border:1px solid #e8ddd5;
+      border-radius:8px;
+      padding:8px 12px;
+      white-space:pre-wrap;
+      word-break:break-all;
+      min-height:20px;
+    `;
     div.textContent = ta.value || '';
     ta.replaceWith(div);
   });
@@ -632,24 +647,43 @@ function savePDF() {
   if (grid) grid.style.gridTemplateColumns = '1fr';
 
   // メモを全開（クローン内で）
-  clone.querySelectorAll('.memo-area').forEach(a => a.classList.add('open'));
+  clone.querySelectorAll('.memo-area').forEach(a => {
+    a.classList.add('open');
+    a.style.display = 'block';
+  });
 
-  // 画面外に配置
-  clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:white;';
+  // section-bodyが非表示になっていれば強制表示
+  clone.querySelectorAll('.section-body').forEach(b => {
+    b.style.display = 'block';
+  });
+
+  // 画面外に配置（widthを明示してレイアウト確定させる）
+  clone.style.cssText = `
+    display: block;
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 800px;
+    background: white;
+    color: #2a2118;
+  `;
   document.body.appendChild(clone);
 
-  const opt = {
-    margin: [0.4, 0.4, 0.4, 0.4],
-    filename: 'checklist.pdf',
-    image: { type: 'jpeg', quality: 0.92 },
-    html2canvas: { scale: 1.5, useCORS: true, logging: false },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['css'], avoid: ['.section', '.memo-area'] }
-  };
+  // レイアウト確定を待ってからPDF生成
+  setTimeout(() => {
+    const opt = {
+      margin: [0.4, 0.4, 0.4, 0.4],
+      filename: 'checklist.pdf',
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 1.5, useCORS: true, logging: false },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css'], avoid: ['.section', '.memo-area'] }
+    };
 
-  html2pdf().set(opt).from(clone).save().then(() => {
-    document.body.removeChild(clone); // 後片付け
-  });
+    html2pdf().set(opt).from(clone).save().then(() => {
+      document.body.removeChild(clone);
+    });
+  }, 300); // 300ms待ってレイアウトを安定させる
 }
 
 const SECTIONS = [

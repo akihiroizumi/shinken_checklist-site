@@ -610,73 +610,33 @@
 
 <script>
 function savePDF() {
-  const ua = navigator.userAgent.toLowerCase();
-  const isInApp = (
-    ua.indexOf('line') !== -1 ||
-    ua.indexOf('fbav') !== -1 ||
-    ua.indexOf('instagram') !== -1 ||
-    ua.indexOf('twitter') !== -1
-  );
-  if (isInApp && window.top === window.self) {
-    alert('PDF保存はブラウザで開いてからご利用ください。');
-    return;
-  }
+  // クローンを画面外に配置してPDF生成
+  const original = document.getElementById('main-content');
+  const clone = original.cloneNode(true);
 
-  const element = document.getElementById('main-content');
-
-  // ===== ① スクロール位置を保存
-  const scrollY = window.scrollY;
-  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-  // ===== ② PDFモードON + スクロールバー幅確保（←これがチラつき防止の核心）
-  document.body.classList.add('pdf-mode');
-  document.body.style.overflow = 'hidden';
-  document.body.style.paddingRight = scrollbarWidth + 'px';
-
-  // ===== ③ メモエリアを強制表示（元に戻せるように記録）
-  const memoAreas = element.querySelectorAll('.memo-area');
-  const closedMemos = [];
-
-  memoAreas.forEach(area => {
-    if (!area.classList.contains('open')) {
-      area.classList.add('open');
-      closedMemos.push(area);
-    }
-  });
-
-  // ===== ④ textarea → div に置き換え
-  const textareas = element.querySelectorAll('textarea');
-  const replacements = [];
-
-  textareas.forEach(ta => {
+  // クローンにpdf-mode適用
+  clone.classList.add('pdf-mode');
+  
+  // textareaをdivに置換（クローン内で）
+  clone.querySelectorAll('textarea').forEach(ta => {
     const div = document.createElement('div');
-
-    div.style.cssText = `
-      font-family:"Noto Sans JP",sans-serif;
-      font-size:0.82rem;
-      color:#2a2118;
-      background:white;
-      border:1px solid #e8ddd5;
-      border-radius:8px;
-      padding:8px 12px;
-      white-space:pre-wrap;
-      word-break:break-all;
-      min-height:20px;
-      break-inside: avoid;
-      page-break-inside: avoid;
-    `;
-
+    div.style.cssText = `font-family:"Noto Sans JP",sans-serif;font-size:0.82rem;
+      color:#2a2118;background:white;border:1px solid #e8ddd5;border-radius:8px;
+      padding:8px 12px;white-space:pre-wrap;word-break:break-all;min-height:20px;`;
     div.textContent = ta.value || '';
-    ta.parentNode.insertBefore(div, ta);
-    ta.style.display = 'none';
-
-    replacements.push({ ta, div });
+    ta.replaceWith(div);
   });
 
-  // ===== ⑤ 1カラム化
-  const grid = document.getElementById('sectionsGrid');
-  const origColumns = grid.style.gridTemplateColumns;
-  grid.style.gridTemplateColumns = '1fr';
+  // 1カラム化（クローン内で）
+  const grid = clone.querySelector('#sectionsGrid');
+  if (grid) grid.style.gridTemplateColumns = '1fr';
+
+  // メモを全開（クローン内で）
+  clone.querySelectorAll('.memo-area').forEach(a => a.classList.add('open'));
+
+  // 画面外に配置
+  clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:white;';
+  document.body.appendChild(clone);
 
   const opt = {
     margin: [0.4, 0.4, 0.4, 0.4],
@@ -684,27 +644,11 @@ function savePDF() {
     image: { type: 'jpeg', quality: 0.92 },
     html2canvas: { scale: 1.5, useCORS: true, logging: false },
     jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-    pagebreak: {
-      mode: ['css'],
-      avoid: ['.section', '.memo-area']
-    }
+    pagebreak: { mode: ['css'], avoid: ['.section', '.memo-area'] }
   };
-  html2pdf().set(opt).from(element).save().then(() => {
-    closedMemos.forEach(area => area.classList.remove('open'));
-    
-    // ===== 元に戻す
-    replacements.forEach(({ ta, div }) => {
-      div.remove();
-      ta.style.display = '';
-    });
 
-    document.body.classList.remove('pdf-mode');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    grid.style.gridTemplateColumns = origColumns;
-    
-    // ===== スクロール位置を復元
-    window.scrollTo(0, scrollY);
+  html2pdf().set(opt).from(clone).save().then(() => {
+    document.body.removeChild(clone); // 後片付け
   });
 }
 

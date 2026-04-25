@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>真剣交際期間チェックリスト</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -20,7 +22,13 @@
     --shadow: rgba(42,33,24,0.08);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
   body {
     font-family: 'Noto Sans JP', sans-serif;
@@ -28,6 +36,8 @@
     color: var(--ink);
     min-height: 100vh;
     padding: 0 0 80px;
+    text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
   }
 
   header {
@@ -279,6 +289,7 @@
     word-break: break-all;
     cursor: text;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
 
   .memo-display.placeholder { color: var(--ink-faint); }
@@ -297,6 +308,7 @@
     resize: vertical;
     min-height: 60px;
     outline: none;
+    -webkit-font-smoothing: antialiased;
   }
 
   .memo-footer {
@@ -330,6 +342,7 @@
     background: white;
     outline: none;
     transition: border-color 0.2s;
+    -webkit-font-smoothing: antialiased;
   }
 
   .add-item-form input:focus { border-color: var(--accent); }
@@ -410,6 +423,7 @@
     outline: none;
     margin-bottom: 12px;
     transition: border-color 0.2s;
+    -webkit-font-smoothing: antialiased;
   }
 
   #login-form input:focus { border-color: var(--accent); }
@@ -427,6 +441,7 @@
     letter-spacing: 0.08em;
     transition: background 0.2s;
     margin-top: 4px;
+    -webkit-font-smoothing: antialiased;
   }
 
   #login-btn:hover { background: var(--accent-hover); }

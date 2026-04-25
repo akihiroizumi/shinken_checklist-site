@@ -34,9 +34,6 @@
     background: var(--ink);
     color: var(--cream);
     padding: 36px 40px 30px;
-    /* position: sticky; */
-    /* top: 0; */
-    /* z-index: 100; */
     box-shadow: 0 2px 20px var(--shadow);
   }
 
@@ -101,9 +98,7 @@
     page-break-inside: avoid;
   }
 
-  .section:hover {
-    box-shadow: 0 4px 24px var(--shadow);
-  }
+  .section:hover { box-shadow: 0 4px 24px var(--shadow); }
 
   .section-header {
     padding: 16px 20px;
@@ -144,9 +139,7 @@
     transition: transform 0.25s;
   }
 
-  .section-body {
-    padding: 12px 16px 16px;
-  }
+  .section-body { padding: 12px 16px 16px; }
 
   .item {
     border-radius: 10px;
@@ -262,10 +255,7 @@
     line-height: 1;
   }
 
-  .btn-delete-item:hover {
-    background: #fee;
-    color: #c55;
-  }
+  .btn-delete-item:hover { background: #fee; color: #c55; }
 
   .memo-area {
     display: none;
@@ -274,9 +264,30 @@
 
   .memo-area.open { display: block; }
 
-  .memo-area textarea {
+  /* ★ メモ表示div（常にdivで表示・PDF対応） */
+  .memo-display {
     width: 100%;
     border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.82rem;
+    color: var(--ink);
+    background: white;
+    min-height: 36px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    cursor: text;
+    line-height: 1.6;
+  }
+
+  .memo-display.placeholder { color: var(--ink-faint); }
+
+  /* ★ 編集時のtextarea */
+  .memo-textarea {
+    display: none;
+    width: 100%;
+    border: 1px solid var(--accent);
     border-radius: 8px;
     padding: 8px 12px;
     font-family: 'Noto Sans JP', sans-serif;
@@ -286,15 +297,18 @@
     resize: vertical;
     min-height: 60px;
     outline: none;
-    transition: border-color 0.2s;
   }
 
-  .memo-area textarea:focus {
-    border-color: var(--accent);
+  .memo-footer {
+    display: flex;
+    align-items: center;
+    margin-top: 6px;
   }
 
-  .memo-area textarea::placeholder {
-    color: var(--ink-faint);
+  .memo-saved-message {
+    font-size: 0.8em;
+    color: var(--accent);
+    flex: 1;
   }
 
   .add-item-form {
@@ -318,13 +332,8 @@
     transition: border-color 0.2s;
   }
 
-  .add-item-form input:focus {
-    border-color: var(--accent);
-  }
-
-  .add-item-form input::placeholder {
-    color: var(--ink-faint);
-  }
+  .add-item-form input:focus { border-color: var(--accent); }
+  .add-item-form input::placeholder { color: var(--ink-faint); }
 
   .btn-add-item {
     background: var(--accent);
@@ -340,15 +349,11 @@
 
   .btn-add-item:hover { background: var(--accent-hover); }
 
-  .section.full-width {
-    grid-column: 1 / -1;
-  }
+  .section.full-width { grid-column: 1 / -1; }
 
   .bottom-bar {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 0; left: 0; right: 0;
     background: var(--ink);
     display: flex;
     gap: 12px;
@@ -368,11 +373,7 @@
     transition: all 0.2s;
   }
 
-  .btn-print {
-    background: var(--accent);
-    color: white;
-  }
-
+  .btn-print { background: var(--accent); color: white; }
   .btn-print:hover { background: var(--accent-hover); }
 
   .btn-reset {
@@ -383,7 +384,6 @@
 
   .btn-reset:hover { background: rgba(255,255,255,0.2); }
 
-  /* ログインフォーム（ヘッダー外・全画面オーバーレイ） */
   #login-overlay {
     position: fixed;
     inset: 0;
@@ -460,20 +460,12 @@
     min-height: 18px;
   }
 
-  /* ヘッダーのauth-bar（ログイン後） */
   .auth-bar {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-top: 12px;
     flex-wrap: wrap;
-  }
-
-  #user-info {
-    font-size: 0.8rem;
-    color: var(--ink-faint);
-    letter-spacing: 0.05em;
-    flex: 1;
   }
 
   #logout-btn {
@@ -492,29 +484,18 @@
 
   #logout-btn:hover { background: rgba(255,255,255,0.25); }
 
+  /* ===== PDF・印刷用 ===== */
   @media print {
+    .bottom-bar, .btn-memo, .btn-delete-item,
+    .add-item-form, .auth-bar, .memo-footer,
+    .memo-textarea { display: none !important; }
 
-    .bottom-bar,
-    .btn-memo,
-    .btn-delete-item,
-    .add-item-form,
-    .auth-bar {
-      display: none !important;
-    }
+    .memo-area { display: block !important; }
+    .memo-display { display: block !important; }
 
-    .memo-area {
-      display: block !important;
-    }
+    body { background: white; }
 
-    body {
-      background: white;
-    }
-
-    /* PDF縦中央揃え解除 */
-    .container {
-      margin: 0 !important;
-      padding: 16px !important;
-    }
+    .container { margin: 0 !important; padding: 16px !important; }
 
     .sections-grid {
       grid-template-columns: 1fr !important;
@@ -527,48 +508,24 @@
       box-shadow: none;
       border: 1px solid #ccc;
     }
-
-    /* メモ欄の改行・文字切れ対策 */
-    .memo-area textarea {
-      display: block !important;
-      height: auto !important;
-      min-height: 0 !important;
-      overflow: visible !important;
-      white-space: pre-wrap !important;
-      word-break: break-all !important;
-    }
   }
 
-  /* html2pdf用：PDF出力時にtextareaの内容を見えるようにする */
-  .pdf-mode .memo-area {
-    display: block !important;
+  /* PDF生成モード */
+  .pdf-mode .bottom-bar,
+  .pdf-mode .auth-bar,
+  .pdf-mode .add-item-form,
+  .pdf-mode .btn-memo,
+  .pdf-mode .btn-delete-item,
+  .pdf-mode .memo-footer,
+  .pdf-mode .memo-textarea { display: none !important; }
+
+  .pdf-mode .memo-area { display: block !important; }
+  .pdf-mode .memo-display { display: block !important; }
+
+  .memo-area, .memo-display {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
-  .pdf-mode .memo-area textarea {
-    white-space: pre-wrap !important;
-    word-break: break-all !important;
-    overflow: visible !important;
-    height: auto !important;
-    resize: none !important;
-  }
-
-  /* ===== PDF専用制御 ===== */
-.pdf-mode .bottom-bar,
-.pdf-mode .auth-bar,
-.pdf-mode .add-item-form,
-.pdf-mode .btn-memo,
-.pdf-mode .btn-delete-item,
-.pdf-mode .memo-area .btn-add-item,
-.pdf-mode .memo-saved-message {
-  display: none !important;
-}
-
-/* メモ欄の改ページ防止 */
-.memo-area,
-.memo-area div {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
 </style>
 </head>
 <body>
@@ -585,7 +542,7 @@
   </div>
 </div>
 
-<!-- メインコンテンツ（ログイン後に表示） -->
+<!-- メインコンテンツ -->
 <div id="main-content" style="display:none;">
   <header>
     <h1>真剣交際期間チェックリスト</h1>
@@ -594,10 +551,9 @@
     </div>
     <div class="progress-label" id="progressLabel">0 / 0 項目完了</div>
     <div class="auth-bar">
-        <button id="logout-btn">ログアウト</button>
+      <button id="logout-btn">ログアウト</button>
     </div>
   </header>
-
   <div class="container">
     <div class="sections-grid" id="sectionsGrid"></div>
   </div>
@@ -609,6 +565,7 @@
 </div>
 
 <script>
+// ===== PDF保存（オリジナルDOM直接操作・div方式で確実） =====
 function savePDF() {
   const ua = navigator.userAgent.toLowerCase();
   const isInApp = ua.includes('line') || ua.includes('fbav') || ua.includes('instagram') || ua.includes('twitter');
@@ -617,20 +574,38 @@ function savePDF() {
     return;
   }
 
-  const element = document.getElementById('main-content');
   const btn = document.querySelector('.btn-print');
   btn.disabled = true;
   btn.textContent = 'PDF生成中...';
 
+  const element = document.getElementById('main-content');
   const scrollY = window.scrollY;
   const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-  // pdf-modeON
+  // 編集中のtextareaがあればdivに反映して閉じる
+  document.querySelectorAll('.memo-textarea').forEach(ta => {
+    if (ta.style.display !== 'none') {
+      const display = ta.previousElementSibling;
+      if (display && display.classList.contains('memo-display')) {
+        const val = ta.value;
+        if (val) {
+          display.textContent = val;
+          display.classList.remove('placeholder');
+        } else {
+          display.textContent = 'メモを入力…';
+          display.classList.add('placeholder');
+        }
+        ta.style.display = 'none';
+        display.style.display = 'block';
+      }
+    }
+  });
+
   document.body.classList.add('pdf-mode');
   document.body.style.overflow = 'hidden';
   document.body.style.paddingRight = scrollbarWidth + 'px';
 
-  // section-bodyを全部表示
+  // 閉じているsection-bodyを開く
   const hiddenBodies = [];
   document.querySelectorAll('.section-body').forEach(b => {
     if (b.style.display === 'none') {
@@ -639,24 +614,13 @@ function savePDF() {
     }
   });
 
-  // メモエリアを全部開く
+  // 閉じているメモエリアを開く
   const closedMemos = [];
   document.querySelectorAll('.memo-area').forEach(area => {
     if (!area.classList.contains('open')) {
       area.classList.add('open');
       closedMemos.push(area);
     }
-  });
-
-  // textareaをdivに置換（stateから値を取得）
-  const replacements = [];
-  document.querySelectorAll('textarea').forEach(ta => {
-    const div = document.createElement('div');
-    div.style.cssText = 'font-family:"Noto Sans JP",sans-serif;font-size:0.82rem;color:#2a2118;background:white;border:1px solid #e8ddd5;border-radius:8px;padding:8px 12px;white-space:pre-wrap;word-break:break-all;min-height:20px;';
-    div.textContent = ta.value || '';
-    ta.parentNode.insertBefore(div, ta);
-    ta.style.display = 'none';
-    replacements.push({ ta, div });
   });
 
   // 1カラム化
@@ -677,10 +641,6 @@ function savePDF() {
     // 元に戻す
     closedMemos.forEach(area => area.classList.remove('open'));
     hiddenBodies.forEach(b => b.style.display = 'none');
-    replacements.forEach(({ ta, div }) => {
-      div.remove();
-      ta.style.display = '';
-    });
     document.body.classList.remove('pdf-mode');
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
@@ -688,6 +648,14 @@ function savePDF() {
     window.scrollTo(0, scrollY);
     btn.disabled = false;
     btn.textContent = '📄 PDF保存';
+  }).catch(() => {
+    document.body.classList.remove('pdf-mode');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    grid.style.gridTemplateColumns = origColumns;
+    btn.disabled = false;
+    btn.textContent = '📄 PDF保存';
+    alert('PDF生成に失敗しました。再度お試しください。');
   });
 }
 
@@ -804,10 +772,8 @@ function renderAll() {
     }
     const secEl = document.createElement('div');
     secEl.className = 'section' + (sec.fullWidth ? ' full-width' : '');
-
     const items = state[si].items;
     const checkedCount = items.filter(i => i.checked).length;
-
     secEl.innerHTML = `
       <div class="section-header" onclick="toggleSection(${si}, this)">
         <div class="section-dot" style="background:${COLORS[si % COLORS.length]}"></div>
@@ -829,6 +795,7 @@ function renderAll() {
   updateProgress();
 }
 
+// ★ div方式でメモを描画（textareaはタップ時のみ表示）
 function renderItems(si) {
   const container = document.getElementById('items-' + si);
   if (!container) return;
@@ -837,6 +804,8 @@ function renderItems(si) {
     const el = document.createElement('div');
     el.className = 'item' + (item.checked ? ' checked' : '');
     el.id = `item-${si}-${ii}`;
+    const memoText = item.memo || '';
+    const isPlaceholder = !memoText;
     el.innerHTML = `
       <div class="item-top" onclick="toggleItem(${si},${ii})">
         <div class="item-checkbox"></div>
@@ -845,33 +814,68 @@ function renderItems(si) {
           ${item.sub ? `<div class="item-sub">${item.sub}</div>` : ''}
         </div>
         <div class="item-actions" onclick="event.stopPropagation()">
-          <button class="btn-memo${item.memo ? ' active' : ''}" onclick="toggleMemo(${si},${ii})" id="btn-memo-${si}-${ii}">メモ</button>
+          <button class="btn-memo${memoText ? ' active' : ''}" onclick="toggleMemo(${si},${ii})" id="btn-memo-${si}-${ii}">メモ</button>
           <button class="btn-delete-item" onclick="deleteItem(${si},${ii})">✕</button>
         </div>
       </div>
-      <div class="memo-area${item.memo ? ' open' : ''}" id="memo-area-${si}-${ii}">
-        <textarea placeholder="メモを入力…" onchange="saveMemo(${si},${ii},this.value)" oninput="autoResizeTextarea(this)">${item.memo || ''}</textarea>
-        <button class="btn-add-item" style="margin-top:6px;float:right;" onclick="saveMemoToFirestore(${si},${ii})">保存</button>
-        <span class="memo-saved-message" id="memo-saved-msg-${si}-${ii}" style="display:none;color:var(--accent);font-size:0.8em;margin-right:10px;float:left;">保存されました</span>
+      <div class="memo-area${memoText ? ' open' : ''}" id="memo-area-${si}-${ii}">
+        <div
+          class="memo-display${isPlaceholder ? ' placeholder' : ''}"
+          id="memo-display-${si}-${ii}"
+          onclick="startEditMemo(${si},${ii})"
+        >${isPlaceholder ? 'メモを入力…' : memoText}</div>
+        <textarea
+          class="memo-textarea"
+          id="memo-textarea-${si}-${ii}"
+          style="display:none;"
+          oninput="autoResizeTextarea(this)"
+          onblur="endEditMemo(${si},${ii})"
+        >${memoText}</textarea>
+        <div class="memo-footer">
+          <span class="memo-saved-message" id="memo-saved-msg-${si}-${ii}" style="display:none;">保存されました</span>
+          <button class="btn-add-item" style="margin-left:auto;font-size:0.82rem;padding:6px 14px;" onclick="saveMemoToFirestore(${si},${ii})">保存</button>
+        </div>
       </div>
     `;
     container.appendChild(el);
-    // textareaの高さを初期化（内容に合わせて自動調整）
-    const textarea = el.querySelector('textarea');
-    if (textarea) autoResizeTextarea(textarea);
   });
+}
+
+// ★ メモ表示divをタップ → textareaに切替
+function startEditMemo(si, ii) {
+  const display = document.getElementById(`memo-display-${si}-${ii}`);
+  const ta = document.getElementById(`memo-textarea-${si}-${ii}`);
+  display.style.display = 'none';
+  ta.style.display = 'block';
+  autoResizeTextarea(ta);
+  ta.focus();
+}
+
+// ★ textareaからフォーカスが外れたらdivに戻す
+function endEditMemo(si, ii) {
+  const display = document.getElementById(`memo-display-${si}-${ii}`);
+  const ta = document.getElementById(`memo-textarea-${si}-${ii}`);
+  const val = ta.value;
+  state[si].items[ii].memo = val;
+  saveState();
+  if (val) {
+    display.textContent = val;
+    display.classList.remove('placeholder');
+  } else {
+    display.textContent = 'メモを入力…';
+    display.classList.add('placeholder');
+  }
+  ta.style.display = 'none';
+  display.style.display = 'block';
+  const btn = document.getElementById(`btn-memo-${si}-${ii}`);
+  if (btn) btn.classList.toggle('active', !!val);
 }
 
 function toggleItem(si, ii) {
   state[si].items[ii].checked = !state[si].items[ii].checked;
   saveState();
   const el = document.getElementById(`item-${si}-${ii}`);
-  if (state[si].items[ii].checked) {
-    el.classList.add('checked');
-  } else {
-    el.classList.remove('checked');
-  }
-  // update section count
+  el.classList.toggle('checked', state[si].items[ii].checked);
   const items = state[si].items;
   const checkedCount = items.filter(i => i.checked).length;
   const countEl = document.querySelector(`#sectionsGrid .section:nth-child(${si+1}) .section-count`);
@@ -884,13 +888,6 @@ function toggleMemo(si, ii) {
   const btn = document.getElementById(`btn-memo-${si}-${ii}`);
   area.classList.toggle('open');
   btn.classList.toggle('active');
-}
-
-function saveMemo(si, ii, val) {
-  state[si].items[ii].memo = val;
-  saveState();
-  const btn = document.getElementById(`btn-memo-${si}-${ii}`);
-  if (btn) btn.classList.toggle('active', !!val);
 }
 
 function toggleSection(si, headerEl) {
@@ -913,7 +910,6 @@ function addItem(si) {
   input.value = '';
   saveState();
   renderItems(si);
-  // update count
   const items = state[si].items;
   const checkedCount = items.filter(i => i.checked).length;
   const secs = document.querySelectorAll('#sectionsGrid .section');
@@ -944,15 +940,11 @@ function resetAll() {
   renderAll();
 }
 
-// --- textareaの高さを入力内容に合わせて自動調整する関数 ---
-// コメント: メモ欄のtextareaが編集時に自動で高さ拡大されるようにする
 function autoResizeTextarea(el) {
-  el.style.height = 'auto'; // 一度リセット
-  el.style.height = (el.scrollHeight) + 'px';
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
-
-// --- sharedLists/list123 にstateを保存 ---
 async function saveToFirestore() {
   const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
   try {
@@ -962,16 +954,13 @@ async function saveToFirestore() {
   }
 }
 
-// --- sharedLists/list123 からstateを読み込み ---
 async function loadFromFirestore() {
-  const { doc, getDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
+  const { doc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js');
   const docRef = doc(window.db, 'sharedLists', 'list123');
-  // リアルタイム同期
   onSnapshot(docRef, (snapshot) => {
     if (snapshot.exists()) {
       const data = snapshot.data();
       if (data.state) {
-        // 各セクションのitemsをマージ（ラベル・subはSECTIONSのものを優先）
         SECTIONS.forEach((sec, si) => {
           const saved = data.state[si];
           if (saved && saved.items) {
@@ -986,7 +975,6 @@ async function loadFromFirestore() {
                 };
               })
             };
-            // 追加アイテム（カスタム追加分）
             if (saved.items.length > sec.items.length) {
               for (let ii = sec.items.length; ii < saved.items.length; ii++) {
                 state[si].items.push(saved.items[ii]);
@@ -1000,15 +988,16 @@ async function loadFromFirestore() {
   });
 }
 
-// メモ保存ボタン → Firestoreに保存
 function saveMemoToFirestore(si, ii) {
-  const textarea = document.getElementById(`memo-area-${si}-${ii}`).querySelector('textarea');
-  state[si].items[ii].memo = textarea.value;
+  // 編集中のtextareaがあれば先にdivに反映
+  const ta = document.getElementById(`memo-textarea-${si}-${ii}`);
+  if (ta && ta.style.display !== 'none') {
+    endEditMemo(si, ii);
+  }
   saveState();
   saveToFirestore();
   const btn = document.getElementById(`btn-memo-${si}-${ii}`);
-  if (btn) btn.classList.toggle('active', !!textarea.value);
-  // 「保存されました」表示
+  if (btn) btn.classList.toggle('active', !!state[si].items[ii].memo);
   const msg = document.getElementById(`memo-saved-msg-${si}-${ii}`);
   if (msg) {
     msg.style.display = 'inline';
@@ -1016,7 +1005,6 @@ function saveMemoToFirestore(si, ii) {
   }
 }
 
-// 認証後にFirestoreからデータを読み込む
 window.onAuthChanged = async (user) => {
   const overlay = document.getElementById('login-overlay');
   if (user) {
@@ -1027,19 +1015,13 @@ window.onAuthChanged = async (user) => {
   }
 };
 </script>
-<!-- =========================
- Firebase Firestore（データベース）接続用スクリプト追加
-========================= -->
+
 <script type="module">
-  // Firebase SDKのimport
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
-  // Firestore SDKのimport
   import { getFirestore } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
-  // Firebase Auth SDKのimport
   import { getAuth } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
-  // Firebase設定
   const firebaseConfig = {
     apiKey: "AIzaSyAX9mZmQ-vMraFwMhwQccdg40DylwDbjv8",
     authDomain: "shinkenkousai.firebaseapp.com",
@@ -1050,25 +1032,17 @@ window.onAuthChanged = async (user) => {
     measurementId: "G-ZRSRYQHV2L"
   };
 
-  // Firebase初期化
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
-
-  // Firestore（データベース）初期化
-  // コメント: これでデータベース操作が可能になります
   const db = getFirestore(app);
-  window.db = db; // グローバル公開で他の関数から参照可能に
-
-  // Firebase Auth 初期化・グローバル公開
+  window.db = db;
   const auth = getAuth(app);
   window.auth = auth;
 
-  // 動作確認（F12 → Consoleで確認）
   console.log("Firestore DB 接続成功", db);
   console.log("Firebase Auth 接続成功", auth);
 </script>
 
-<!-- auth.js: Googleログイン/ログアウト処理 -->
 <script type="module" src="auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </body>

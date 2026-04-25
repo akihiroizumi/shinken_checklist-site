@@ -351,28 +351,6 @@
 
   .section.full-width { grid-column: 1 / -1; }
 
-  .bottom-bar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--ink);
-    display: flex;
-    gap: 12px;
-    padding: 14px 24px;
-    justify-content: center;
-    z-index: 200;
-  }
-
-  .bottom-bar button {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.82rem;
-    padding: 8px 22px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: none;
-    letter-spacing: 0.05em;
-    transition: all 0.2s;
-  }
-
   .btn-print { background: var(--accent); color: white; }
   .btn-print:hover { background: var(--accent-hover); }
 
@@ -486,7 +464,7 @@
 
   /* ===== PDF・印刷用 ===== */
   @media print {
-    .bottom-bar, .btn-memo, .btn-delete-item,
+    .btn-memo, .btn-delete-item,
     .add-item-form, .auth-bar, .memo-footer,
     .memo-textarea { display: none !important; }
 
@@ -511,7 +489,6 @@
   }
 
   /* PDF生成モード */
-  .pdf-mode .bottom-bar,
   .pdf-mode .auth-bar,
   .pdf-mode .add-item-form,
   .pdf-mode .btn-memo,
@@ -559,105 +536,7 @@
   </div>
 </div>
 
-<div class="bottom-bar" style="display:none;">
-  <button class="btn-print" onclick="savePDF()">📄 PDF保存</button>
-  <button class="btn-reset" onclick="resetAll()">リセット</button>
-</div>
-
 <script>
-// ===== PDF保存（オリジナルDOM直接操作・div方式で確実） =====
-function savePDF() {
-  const ua = navigator.userAgent.toLowerCase();
-  const isInApp = ua.includes('line') || ua.includes('fbav') || ua.includes('instagram') || ua.includes('twitter');
-  if (isInApp) {
-    alert('PDF保存はブラウザで開いてからご利用ください。');
-    return;
-  }
-
-  const btn = document.querySelector('.btn-print');
-  btn.disabled = true;
-  btn.textContent = 'PDF生成中...';
-
-  const element = document.getElementById('main-content');
-  const scrollY = window.scrollY;
-  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-  // 編集中のtextareaがあればdivに反映して閉じる
-  document.querySelectorAll('.memo-textarea').forEach(ta => {
-    if (ta.style.display !== 'none') {
-      const display = ta.previousElementSibling;
-      if (display && display.classList.contains('memo-display')) {
-        const val = ta.value;
-        if (val) {
-          display.textContent = val;
-          display.classList.remove('placeholder');
-        } else {
-          display.textContent = 'メモを入力…';
-          display.classList.add('placeholder');
-        }
-        ta.style.display = 'none';
-        display.style.display = 'block';
-      }
-    }
-  });
-
-  document.body.classList.add('pdf-mode');
-  document.body.style.overflow = 'hidden';
-  document.body.style.paddingRight = scrollbarWidth + 'px';
-
-  // 閉じているsection-bodyを開く
-  const hiddenBodies = [];
-  document.querySelectorAll('.section-body').forEach(b => {
-    if (b.style.display === 'none') {
-      b.style.display = '';
-      hiddenBodies.push(b);
-    }
-  });
-
-  // 閉じているメモエリアを開く
-  const closedMemos = [];
-  document.querySelectorAll('.memo-area').forEach(area => {
-    if (!area.classList.contains('open')) {
-      area.classList.add('open');
-      closedMemos.push(area);
-    }
-  });
-
-  // 1カラム化
-  const grid = document.getElementById('sectionsGrid');
-  const origColumns = grid.style.gridTemplateColumns;
-  grid.style.gridTemplateColumns = '1fr';
-
-  const opt = {
-    margin: [0.4, 0.4, 0.4, 0.4],
-    filename: 'checklist.pdf',
-    image: { type: 'jpeg', quality: 0.92 },
-    html2canvas: { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['css'], avoid: ['.section', '.memo-area'] }
-  };
-
-  html2pdf().set(opt).from(element).save().then(() => {
-    // 元に戻す
-    closedMemos.forEach(area => area.classList.remove('open'));
-    hiddenBodies.forEach(b => b.style.display = 'none');
-    document.body.classList.remove('pdf-mode');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    grid.style.gridTemplateColumns = origColumns;
-    window.scrollTo(0, scrollY);
-    btn.disabled = false;
-    btn.textContent = '📄 PDF保存';
-  }).catch(() => {
-    document.body.classList.remove('pdf-mode');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    grid.style.gridTemplateColumns = origColumns;
-    btn.disabled = false;
-    btn.textContent = '📄 PDF保存';
-    alert('PDF生成に失敗しました。再度お試しください。');
-  });
-}
 
 const SECTIONS = [
   {
@@ -1041,6 +920,35 @@ window.onAuthChanged = async (user) => {
 
   console.log("Firestore DB 接続成功", db);
   console.log("Firebase Auth 接続成功", auth);
+
+  // ===== PDF自動起動 =====
+function isInAppBrowser() {
+  const ua = navigator.userAgent.toLowerCase();
+  return (
+    ua.includes('line') ||
+    ua.includes('fbav') ||
+    ua.includes('instagram') ||
+    ua.includes('twitter')
+  );
+}
+
+window.addEventListener('load', () => {
+
+  // LINEなどはブロック
+  if (isInAppBrowser()) {
+    alert('PDF保存はブラウザで開いてからご利用ください。');
+    return;
+  }
+
+  // PDFモード
+  document.body.classList.add('pdf-mode');
+
+  // 少し待って印刷ダイアログ
+  setTimeout(() => {
+    window.print();
+  }, 500);
+});
+
 </script>
 
 <script type="module" src="auth.js"></script>
